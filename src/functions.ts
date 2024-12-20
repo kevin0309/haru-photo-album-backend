@@ -15,13 +15,13 @@ export const checkConfigEnv =
   (): E.Either<string, types.Config> =>
     pipe(
       E.Do,
-      E.bind("applicationName", () =>
-        E.fromNullable("applicationName not found")(process.env["APPLICATION_NAME"])),
-      E.bind("applicationServerPort", () => pipe(
-        E.fromNullable("applicationServerPort not found")(process.env["APPLICATION_SERVER_PORT"]),
-        E.map(Number),
-        E.chain(_ => Number.isNaN(_) ? E.left("applicationServerPort wrong format") : E.right(_))
-      )),
+      // E.bind("applicationName", () =>
+      //   E.fromNullable("applicationName not found")(process.env["APPLICATION_NAME"])),
+      // E.bind("applicationServerPort", () => pipe(
+      //   E.fromNullable("applicationServerPort not found")(process.env["APPLICATION_SERVER_PORT"]),
+      //   E.map(Number),
+      //   E.chain(_ => Number.isNaN(_) ? E.left("applicationServerPort wrong format") : E.right(_))
+      // )),
       E.chain(obj => pipe(
         types.ConfigCodec.decode(obj),
         E.mapLeft(utils.convertErrorsToString)
@@ -30,11 +30,11 @@ export const checkConfigEnv =
     )
 
 export const loadConfigFile =
-  (): E.Either<string, types.Config> =>
+  (executeMode: string): E.Either<string, types.Config> =>
     pipe(
       // 파일로부터 load
       E.tryCatch(
-        () => fs.readFileSync("./config.json", 'utf-8'),
+        () => fs.readFileSync(`./.env/${executeMode}.json`, 'utf-8'),
         e => `fs.readFileSync(): error(${utils.errorToString(e)})`
       ),
       // JSON 파싱
@@ -100,5 +100,11 @@ export const initializeFastifyServer =
         () => app.listen({port, host: "0.0.0.0"}),
         e => `server listen error(${utils.errorToString(e)})`
       )),
-      TE.mapLeft(e => `initializeFastifyServer(): error occurred(${e})`)
+      TE.bimap(
+        e => `initializeFastifyServer(): error occurred(${e})`,
+        res => `initializeFastifyServer(): Successfully initialize server!(${res})\n`
+          + handlers
+            .map(handler => ` # [${handler.method}] ${handler.path} -> ${handler.function.name}`)
+            .join('\n')
+      )
     )

@@ -11,8 +11,7 @@ export type GlobalLogger =
 
 export type Config = t.TypeOf<typeof ConfigCodec>
 export const ConfigCodec = t.type({
-  applicationName: t.string,
-  applicationServerPort: t.number
+
 }, "Config")
 
 export type HandlerConfig =

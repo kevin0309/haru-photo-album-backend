@@ -4,9 +4,15 @@
   "description": "Haru Photo Album Project - backend",
   "main": "dist/index.js",
   "scripts": {
-    "clean": "rm -rf dist",
-    "build": "npx tsc",
-    "start": "ts-node src/index.ts",
+    "nodejs:clean": "rm -rf dist",
+    "nodejs:build": "npx tsc",
+    "docker:build": "docker build -t ${npm_package_name} .",
+    "docker:start": "docker run -p $APPLICATION_SERVER_PORT:$APPLICATION_SERVER_PORT -e APPLICATION_SERVER_PORT=$APPLICATION_SERVER_PORT -e NODE_ENV=$NODE_ENV --name ${npm_package_name} ${npm_package_name}",
+    "docker:stop": "docker stop ${npm_package_name} || true",
+    "docker:remove": "docker rm ${npm_package_name} || true",
+    "build": "npm-run-all nodejs:clean nodejs:build docker:build",
+    "start": "NODE_ENV=test APPLICATION_SERVER_PORT=3030 npm-run-all docker:stop docker:remove docker:start",
+    "build-n-start": "NODE_ENV=test APPLICATION_SERVER_PORT=3030 npm-run-all nodejs:clean nodejs:build docker:build docker:stop docker:remove docker:start",
     "test": "ts-node src/test.ts"
   },
   "repository": {
@@ -21,6 +27,7 @@
   "homepage": "https://github.com/kevin0309/haru-photo-album-backend#readme",
   "devDependencies": {
     "@types/node": "^20.17.10",
+    "npm-run-all": "^4.1.5",
     "ts-node": "^10.9.2",
     "typescript": "^4.9.4"
   },
