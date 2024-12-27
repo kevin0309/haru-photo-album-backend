@@ -4,8 +4,8 @@ import * as T from 'fp-ts/lib/Task'
 import * as TE from 'fp-ts/lib/TaskEither'
 import { pipe } from 'fp-ts/lib/function'
 
-import * as types from './types'
-import * as func from './functions'
+import * as types from '../types'
+import * as func from '../util/functions'
 
 
 // Http response status 2XX에 대하여 허용

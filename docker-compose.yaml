@@ -1,0 +1,36 @@
+services:
+  mongodb:
+      image: mongo:6.0
+      container_name: haru-photo-album-mongodb
+      ports:
+        - '${MONGODB_PORT}:${MONGODB_PORT}'
+      volumes:
+        - mongodb_data:/data/db
+      environment:
+        - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER_NAME}
+        - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_USER_PASSWORD}
+      networks:
+        -  haru-photo-album-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ${APPLICATION_NAME}
+    depends_on:
+      - mongodb
+    env_file:
+      - .env
+    environment:
+      # Activate when using local MongoDB Server
+      MONGODB_URI: mongodb://${MONGODB_USER_NAME}:${MONGODB_USER_PASSWORD}@mongodb:${MONGODB_PORT}
+    ports:
+      - '${APPLICATION_SERVER_PORT}:${APPLICATION_SERVER_PORT}'
+    networks:
+      - haru-photo-album-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  haru-photo-album-network:

@@ -3,51 +3,34 @@ import * as E from "fp-ts/lib/Either"
 import * as T from 'fp-ts/lib/Task'
 import * as TE from "fp-ts/lib/TaskEither"
 import { pipe } from "fp-ts/lib/function"
-import * as fs from 'fs'
+import Fastify from "fastify"
+import mongoose from "mongoose"
 import { createHash } from 'crypto'
 
-import * as types from './types'
+import * as types from '../types'
 import * as utils from './utils'
-import Fastify from "fastify"
 
 
 export const checkConfigEnv =
   (): E.Either<string, types.Config> =>
     pipe(
       E.Do,
-      // E.bind("applicationName", () =>
-      //   E.fromNullable("applicationName not found")(process.env["APPLICATION_NAME"])),
-      // E.bind("applicationServerPort", () => pipe(
-      //   E.fromNullable("applicationServerPort not found")(process.env["APPLICATION_SERVER_PORT"]),
-      //   E.map(Number),
-      //   E.chain(_ => Number.isNaN(_) ? E.left("applicationServerPort wrong format") : E.right(_))
-      // )),
+      E.bind("applicationName", () =>
+        E.fromNullable("applicationName not found")(process.env["APPLICATION_NAME"])
+      ),
+      E.bind("applicationServerPort", () => pipe(
+        E.fromNullable("applicationServerPort not found")(process.env["APPLICATION_SERVER_PORT"]),
+        E.map(Number),
+        E.chain(_ => Number.isNaN(_) ? E.left("applicationServerPort wrong format") : E.right(_))
+      )),
+      E.bind('mongodbUri', () =>
+        E.fromNullable("mongodbUri not found")(process.env["MONGODB_URI"])
+      ),
       E.chain(obj => pipe(
         types.ConfigCodec.decode(obj),
         E.mapLeft(utils.convertErrorsToString)
       )),
       E.mapLeft(e => `checkConfigEnv(): unexpected error(${e})`)
-    )
-
-export const loadConfigFile =
-  (executeMode: string): E.Either<string, types.Config> =>
-    pipe(
-      // 파일로부터 load
-      E.tryCatch(
-        () => fs.readFileSync(`./.env/${executeMode}.json`, 'utf-8'),
-        e => `fs.readFileSync(): error(${utils.errorToString(e)})`
-      ),
-      // JSON 파싱
-      E.chain(fileString => E.tryCatch(
-        () => JSON.parse(fileString),
-        e => `JSON.parse(): error(${utils.errorToString(e)})`
-      )),
-      // type Validation
-      E.chain(obj => pipe(
-        types.ConfigCodec.decode(obj),
-        E.mapLeft(utils.convertErrorsToString)
-      )),
-      E.mapLeft(e => `loadConfigFile(): unexpected error(${e})`)
     )
 
 export const generateConsoleLogger = (): types.GlobalLogger =>
@@ -56,6 +39,19 @@ export const generateConsoleLogger = (): types.GlobalLogger =>
     error: console.error,
     debug: console.log
   })
+
+export const initializeMongoDbConn = (logger: types.GlobalLogger, mongoUri: string): TE.TaskEither<string, string> =>
+  pipe(
+    TE.tryCatch(
+      () => mongoose.connect(mongoUri),
+      e => `mongodb connect error(${e})`
+    ),
+    TE.bimap(
+      e => `initializeMongoDbConn(): ` + e,
+      () => `initializeMongoDbConn(): successfully connected to mongodb`
+    )
+  )
+
 
 export const initializeFastifyServer =
   (port: number) => (handlers: Array<types.HandlerConfig>): TE.TaskEither<string, string> =>

@@ -11,7 +11,9 @@ export type GlobalLogger =
 
 export type Config = t.TypeOf<typeof ConfigCodec>
 export const ConfigCodec = t.type({
-
+  applicationName: t.string,
+  applicationServerPort: t.number,
+  mongodbUri: t.string,
 }, "Config")
 
 export type HandlerConfig =

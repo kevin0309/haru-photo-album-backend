@@ -7,13 +7,10 @@
     "nodejs:clean": "rm -rf dist",
     "nodejs:build": "npx tsc",
     "docker:build": "docker build -t ${npm_package_name} .",
-    "docker:start": "docker run -p $APPLICATION_SERVER_PORT:$APPLICATION_SERVER_PORT -e APPLICATION_SERVER_PORT=$APPLICATION_SERVER_PORT -e NODE_ENV=$NODE_ENV --name ${npm_package_name} ${npm_package_name}",
-    "docker:stop": "docker stop ${npm_package_name} || true",
-    "docker:remove": "docker rm ${npm_package_name} || true",
+    "docker:start": "docker run -p $APPLICATION_SERVER_PORT:$APPLICATION_SERVER_PORT -e APPLICATION_SERVER_PORT=$APPLICATION_SERVER_PORT --name ${npm_package_name} ${npm_package_name}",
     "build": "npm-run-all nodejs:clean nodejs:build docker:build",
-    "start": "NODE_ENV=test APPLICATION_SERVER_PORT=3030 npm-run-all docker:stop docker:remove docker:start",
-    "build-n-start": "NODE_ENV=test APPLICATION_SERVER_PORT=3030 npm-run-all nodejs:clean nodejs:build docker:build docker:stop docker:remove docker:start",
-    "test": "ts-node src/test.ts"
+    "test": "ts-node src/test.ts",
+    "test:local-start": "docker-compose up --build"
   },
   "repository": {
     "type": "git",
@@ -34,6 +31,7 @@
   "dependencies": {
     "fastify": "^3.29.5",
     "fp-ts": "^2.16.9",
-    "io-ts": "^2.2.22"
+    "io-ts": "^2.2.22",
+    "mongoose": "^8.9.2"
   }
 }
